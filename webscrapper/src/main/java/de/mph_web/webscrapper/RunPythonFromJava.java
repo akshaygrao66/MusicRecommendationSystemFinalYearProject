@@ -8,7 +8,7 @@ public class RunPythonFromJava {
 	public static void main(String[] argv) throws IOException
 	{
 		String s = null;
-		String command = "python C:\\Users\\aksha\\OneDrive\\Desktop\\Million-Song-Dataset-HDF5-to-CSV-master\\hdf5_getters.py D:\\projectdatabases\\MSD\\MillionSongSubset\\data\\A\\A\\A\\TRAAABD128F429CF47.h5 get_tempo";
+		String command = "python C:\\Users\\aksha\\OneDrive\\Desktop\\Million-Song-Dataset-HDF5-to-CSV-master\\hdf5_getters.py D:\\projectdatabases\\MSD\\MillionSongSubset\\data\\TRAAABD128F429CF47.h5 get_tempo";
 		try {
 		Process p = Runtime.getRuntime().exec(command);
 		BufferedReader stdInput = new BufferedReader(new 
