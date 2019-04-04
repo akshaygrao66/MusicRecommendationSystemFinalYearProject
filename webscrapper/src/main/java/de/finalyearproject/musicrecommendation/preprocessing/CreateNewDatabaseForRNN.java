@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import javax.swing.text.ChangedCharSetException;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -44,9 +43,9 @@ public class CreateNewDatabaseForRNN {
 	static ObjectMapper mapper = new ObjectMapper();
 	static FileWriter logger=null;
 	static BufferedWriter logwriter = new BufferedWriter(returnlogger());
-	static int extraRootFilesAdded=0;
-	static int extraSimilarsAdded=0;
 	public static void main(String[] args) throws IOException, SQLException {
+		int extraRootFilesAdded=0;
+		int extraSimilarsAdded=0;
 		boolean rootPresentInMsD=false;
 		boolean rootPresentInMusixMatch=false;
 		boolean similarPresentInMSD=false;
@@ -65,10 +64,10 @@ public class CreateNewDatabaseForRNN {
 			System.out.println("SQLite connection failed");
 			return;
 		}
-		boolean g=true;
+		boolean g=false;;
 		for(File lastfmRootFile:lastfmDirectory.listFiles()){
 			String lastfmRootFileName=lastfmRootFile.getName().replaceFirst("[.][^.]+$", "");
-			if(lastfmRootFileName.equals("TRAHYMJ128E0787801")) {
+			if(lastfmRootFileName.equals("TRBIJMU12903CF892B")) {
 				g=true;
 			}
 			if(g)
@@ -224,7 +223,7 @@ public class CreateNewDatabaseForRNN {
 			}
 			else {
 				System.out.println("Lyrics null possibly because API didn't recognise song"+musixMatchID);
-				logwriter.write("Lyrics null possibly because API didn't recognise song"+musixMatchID);
+				//logwriter.write("Lyrics null possibly because API didn't recognise song"+musixMatchID);
 				return false;
 			}
 		}
@@ -241,7 +240,7 @@ public class CreateNewDatabaseForRNN {
 			for (Entry<String, Integer> entry : lyricsWordCountMap.entrySet()) {
 				if(writeToMySQLMusixMatchDB(msdTrackID, Integer.parseInt(musixMatchID), entry.getKey(), entry.getValue())==false) {
 					System.out.println("Write error to SQLite database error vausing termination");
-					logwriter.write("Write error to SQLite database error vausing termination");
+					//logwriter.write("Write error to SQLite database error vausing termination");
 					return false;
 				}
 			}
@@ -303,7 +302,7 @@ public class CreateNewDatabaseForRNN {
 		{
 			System.out.println("API call number=======================>"+musixMatchAPICallCount);
 			try {
-				URL url = new URL("https://api.musixmatch.com/ws/1.1/track.lyrics.get?format=json&callback=callback&track_id="+musixMatchID+"&apikey=790ce5396dda6c305263f2e96fc0c40e");
+				URL url = new URL("https://api.musixmatch.com/ws/1.1/track.lyrics.get?format=json&callback=callback&track_id="+musixMatchID+"&apikey=474c3dc8f7d5081a86a6fa70a1b02569s");
 				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 				conn.setRequestMethod("GET");
 				conn.setRequestProperty("Accept", "application/json");
@@ -451,6 +450,9 @@ public class CreateNewDatabaseForRNN {
 
 		String val = stringBuilder.toString();
 		String[] arr=val.split(",");
+		
+		
+		
 		for(int u=0;u<arr.length;u++){
 			arr[u]=arr[u].toLowerCase();
 		}
