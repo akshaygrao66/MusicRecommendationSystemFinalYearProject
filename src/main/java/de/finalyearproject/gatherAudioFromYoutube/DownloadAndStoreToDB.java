@@ -39,8 +39,8 @@ public class DownloadAndStoreToDB {
 	static BufferedWriter logwriter = new BufferedWriter(returnlogger());
 	static Connection connsqlite=null;
 	static Connection conmysql=null;
-	final static String LASTFM_DATASET_SOURCE="D:\\\\projectdatabases\\\\LASTFM\\\\lastfm_subset";
-	final static String MSD_DATASET_SOURCE="D:\\projectdatabases\\MSD\\MillionSongSubset\\data";
+	final static String LASTFM_DATASET_SOURCE="F:\\\\projectdatabases\\\\LASTFM\\\\lastfm_subset";
+	final static String MSD_DATASET_SOURCE="F:\\projectdatabases\\MSD\\MillionSongSubset\\data";
 	public static void main(String[] args) throws SQLException, IOException, UnsupportedAudioFileException, LineUnavailableException{
 		if(!establishMySqlConnectionWithNewMusixMatchDB()) {
 			System.out.println("MYSQL connection failed");
@@ -103,7 +103,7 @@ public class DownloadAndStoreToDB {
 		delete.setString(1, eachMSDTrack);
 		delete.executeUpdate();
 		System.out.println("Deleted trackID:"+eachMSDTrack+" from Database");
-		FileWriter deleteLog=new FileWriter("D:\\projectdatabases\\logTrackDeletedDueToYoutubeResultsNotFound.txt");
+		FileWriter deleteLog=new FileWriter("F:\\projectdatabases\\logTrackDeletedDueToYoutubeResultsNotFound.txt");
 		deleteLog.write("Deleted trackID:"+eachMSDTrack+" from Database");
 		deleteLog.close();
 	}
@@ -575,7 +575,7 @@ public class DownloadAndStoreToDB {
 
 	private static Writer returnlogger() {
 		try {
-			logger=new FileWriter("D:\\projectdatabases\\logWhereDidImageDownloadStop.txt");
+			logger=new FileWriter("F:\\projectdatabases\\logWhereDidImageDownloadStop.txt");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
