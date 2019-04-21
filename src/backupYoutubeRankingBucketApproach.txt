@@ -1,0 +1,432 @@
+package de.finalyearproject.gatherAudioFromYoutube;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Writer;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import de.finalyearproject.model.Youtube.ResultsPageResponse;
+import de.finalyearproject.preprocessing.GetAttributeFromMSD;
+
+public class DownloadAndStoreToDB {
+	static FileWriter logger=null;
+	static BufferedWriter logwriter = new BufferedWriter(returnlogger());
+	static Connection connsqlite=null;
+	static Connection conmysql=null;
+	final static String LASTFM_DATASET_SOURCE="D:\\\\projectdatabases\\\\LASTFM\\\\lastfm_subset";
+	final static String MSD_DATASET_SOURCE="D:\\projectdatabases\\MSD\\MillionSongSubset\\data";
+	public static void main(String[] args) throws Exception {
+		if(!establishMySqlConnectionWithNewMusixMatchDB()) {
+			System.out.println("MYSQL connection failed");
+			return;
+		}
+		if(!establishSqliteConnectionWithMusixmatch()){
+			System.out.println("SQLite connection failed");
+			return;
+		}
+		GetAttributeFromMSD getAttributesFromMSD;
+		ArrayList<String> allMSDTrackIDs=getAllUniqueTrackIDs();
+
+		//		for(String eachMSDTrack:allMSDTrackIDs) {
+		//			getAttributesFromMSD=new GetAttributeFromMSD(eachMSDTrack);
+		//			
+		//			String title=getAttributesFromMSD.getSong_title();
+		//			String artist_name=getAttributesFromMSD.getArtist_name();
+		//			Double duration=getAttributesFromMSD.getDuration();
+		//			
+		//			
+		//		}
+		ResultsPageResponse optimalResponse=returnLinksForAudioAndImageDownload("larger than life","backstreet boys",180.20,2019);
+	}
+
+	public static ArrayList<String> getAllUniqueTrackIDs() throws SQLException{
+		ArrayList<String> trackIdsUnique=new ArrayList<String>();
+		trackIdsUnique.clear();
+		Statement st1 = conmysql.createStatement();
+		ResultSet rs1 = st1.executeQuery("select distinct track_id from lyrics");
+		while(rs1.next()) {
+			trackIdsUnique.add(rs1.getString(1));
+		}
+		return trackIdsUnique;
+	}
+
+	public static ResultsPageResponse returnLinksForAudioAndImageDownload(String songTitle,String artist_Name,Double duration,int year) throws Exception {
+		int durationFromDB=(int)Math.round(duration);
+		// final Document document = Jsoup.connect("https://www.youtube.com/results?search_query=faded").get();
+		String url   = "http://www.youtube.com/results";
+		String query = songTitle+" "+artist_Name; //This is the search string which is searched in youtube
+
+		Document document = Jsoup.connect(url)
+				.data("search_query", query)
+				.get();
+		//Document document = Jsoup.parse(loadContentByHttpClient(url+"?search_query="+"Faded"), "UTF8", "");
+		logwriter.write(document.toString());
+		logwriter.close();
+		//        for (Element songContainer : root.select("ytd-video-renderer.style-scope.ytd-item-section-renderer[lockup=\"\"]")) {
+
+		ArrayList<ResultsPageResponse> resultPageResponsesFromYoutube=new ArrayList<ResultsPageResponse>();
+		resultPageResponsesFromYoutube.clear();
+		Elements songContainers=document.select("div.yt-lockup.yt-lockup-tile.yt-lockup-video.vve-check.clearfix");
+		int count=0;
+		for (int i=0;i<songContainers.size() && count<6;i++) {
+			Element songContainer=songContainers.get(i);
+			if(!checkIfResultIsPlaylistUsingJSoup(songContainer) && !checkDurationGreaterThanAnHourFromYouTube(songContainer)) {
+				//int differenceInDuration=calculateDurationDifferenceBetweenYoutubeAndMSD(songContainer,durationFromDB);
+				ResultsPageResponse eachSongResponseFromYoutube=getResultsPageResponseForEachSong(songContainer);
+				resultPageResponsesFromYoutube.add(eachSongResponseFromYoutube);
+				count++;
+			}
+		}
+		return null;
+		//return returnOptimalSongFromResultsResponseInResultsPageInYoutube(resultPageResponsesFromYoutube,songTitle,artist_Name,duration,year);
+	}
+
+	public static ResultsPageResponse returnOptimalSongFromResultsResponseInResultsPageInYoutube(ArrayList<ResultsPageResponse> resultPageResponsesFromYoutube,String songTitle,String artist_Name,Double duration,int year) {
+		ArrayList<ResultsPageResponse> bucketSongTitlePresentInYoutubeTitle=returnBucketWhoseStringParameterIsPresentInYoutubeTitle(resultPageResponsesFromYoutube, songTitle);
+		ArrayList<ResultsPageResponse> bucketArtistNamePresentInYoutubeTitle=returnBucketWhoseStringParameterIsPresentInYoutubeTitle(resultPageResponsesFromYoutube, artist_Name);
+		ArrayList<ResultsPageResponse> bucketSongTitlePresentInYoutubeChannelName=returnBucketWhoseStringParameterIsPresentInYoutubeChannelName(resultPageResponsesFromYoutube,songTitle);
+		ArrayList<ResultsPageResponse> bucketArtistNamePresentInYoutubeChannelName=returnBucketWhoseStringParameterIsPresentInYoutubeChannelName(resultPageResponsesFromYoutube, artist_Name);
+		ArrayList<ResultsPageResponse> bucketYearPresentInYoutubeTitle=returnBucketWhoseStringParameterIsPresentInYoutubeTitle(resultPageResponsesFromYoutube,Integer.toString(year));
+		
+		if(bucketSongTitlePresentInYoutubeTitle.size()>0) { //Song title matches with youtube title
+			ArrayList<ResultsPageResponse> bucketArtistNameAndTitlePresentInYoutubeTitle=returnBucketWhoseStringParameterIsPresentInYoutubeTitle(bucketSongTitlePresentInYoutubeTitle, artist_Name);
+			if(bucketArtistNameAndTitlePresentInYoutubeTitle.size()>0) { //Song and artist name present in youtube title
+				ArrayList<ResultsPageResponse> bucketArtistTitleYearPresentInYoutubeTitle=returnBucketWhoseStringParameterIsPresentInYoutubeTitle(bucketArtistNameAndTitlePresentInYoutubeTitle, Integer.toString(year));
+				if(bucketArtistTitleYearPresentInYoutubeTitle.size()>0) {//Song,artist name and year present in youtube title
+					if(bucketArtistTitleYearPresentInYoutubeTitle.size()>1) { //If more than one songs have all 3 fields matching with title return based on duration and views respectively
+						return returnSongBasedOnDurationAndViews(bucketArtistTitleYearPresentInYoutubeTitle, duration);
+					}
+					else {	//If only one song present having all 3 fields matching with youtube title, just return it
+						return bucketArtistTitleYearPresentInYoutubeTitle.get(0);
+					}
+				}
+				else { //Only song and artist present in youtube title(not year)
+					ArrayList<ResultsPageResponse> bucketSongArtistInTitleAndSongInChannel=returnBucketWhoseStringParameterIsPresentInYoutubeChannelName(bucketArtistNameAndTitlePresentInYoutubeTitle, songTitle);
+					if(bucketSongArtistInTitleAndSongInChannel.size()>0) { //Song,artist in title and song in channel name
+						return returnSongBasedOnDurationAndViews(bucketSongArtistInTitleAndSongInChannel, duration);
+					}
+					else{
+						ArrayList<ResultsPageResponse> bucketSongArtistInTitleAndArtistInChannel=returnBucketWhoseStringParameterIsPresentInYoutubeChannelName(bucketArtistNameAndTitlePresentInYoutubeTitle, artist_Name);
+						if(bucketSongArtistInTitleAndArtistInChannel.size()>0) {	//Song,artist in title and artist in channel name
+							return returnSongBasedOnDurationAndViews(bucketSongArtistInTitleAndArtistInChannel, duration);
+						}
+						else {	//Song,artist in title(not year) and not artist or song in channel
+							return returnSongBasedOnDurationAndViews(bucketArtistNameAndTitlePresentInYoutubeTitle, duration);
+						}
+					}
+				}
+			}
+			else {
+				
+			}
+		}
+		else {	//Song title not present in youtube title
+			
+		}
+		return null;
+	}
+	
+	private static ArrayList<ResultsPageResponse> returnBucketWhoseStringParameterIsPresentInYoutubeChannelName(ArrayList<ResultsPageResponse> resultPageResponsesFromYoutube, String param) {
+		ArrayList<ResultsPageResponse> bucketChannelNameMatches=new ArrayList<ResultsPageResponse>();
+		bucketChannelNameMatches.clear();
+
+		for(ResultsPageResponse eachSong:resultPageResponsesFromYoutube) {
+			if(eachSong.getChannel().toLowerCase().contains(param.toLowerCase())) {
+				bucketChannelNameMatches.add(eachSong);
+			}
+		}
+		return bucketChannelNameMatches;
+	}
+
+	public static ArrayList<ResultsPageResponse> returnBucketWhoseStringParameterIsPresentInYoutubeTitle(ArrayList<ResultsPageResponse> resultPageResponsesFromYoutube,String param){
+		ArrayList<ResultsPageResponse> bucketTitlesMatches=new ArrayList<ResultsPageResponse>();
+		bucketTitlesMatches.clear();
+
+		for(ResultsPageResponse eachSong:resultPageResponsesFromYoutube) {
+			if(eachSong.getSong_title().toLowerCase().contains(param.toLowerCase())) {
+				bucketTitlesMatches.add(eachSong);
+			}
+		}
+		return bucketTitlesMatches;
+	}
+	
+	
+	public static ResultsPageResponse returnSongBasedOnDurationAndViews(
+			ArrayList<ResultsPageResponse> resultPageResponsesFromYoutube,Double duration) {
+
+		ArrayList<ResultsPageResponse> zeroDifference=new ArrayList<ResultsPageResponse>();
+		zeroDifference.clear();
+
+		ArrayList<ResultsPageResponse> belowTenSecondsDifference=new ArrayList<ResultsPageResponse>();
+		belowTenSecondsDifference.clear();
+
+		ArrayList<ResultsPageResponse> aboveTenSecondDifference=new ArrayList<ResultsPageResponse>();
+		aboveTenSecondDifference.clear();
+
+		for(ResultsPageResponse eachSong:resultPageResponsesFromYoutube) {
+			int diff=(int)Math.round(duration)-eachSong.getDuration();
+			diff=Math.abs(diff);
+			if(diff==0) {
+				zeroDifference.add(eachSong);
+			}
+			else if(diff<=10) {
+				belowTenSecondsDifference.add(eachSong);
+			}
+			else if(diff >10) {
+				aboveTenSecondDifference.add(eachSong);
+			}
+		}
+		if(zeroDifference.size()==1) {
+			return zeroDifference.get(0);
+		}
+		else if(zeroDifference.size()>1) {
+			return returnSongsBasedOnViews(zeroDifference);
+		}
+		else{
+			if(belowTenSecondsDifference.size()==1) {
+				return belowTenSecondsDifference.get(0);
+			}
+			else if(belowTenSecondsDifference.size()>1) {
+				return returnSongsBasedOnViews(belowTenSecondsDifference);
+			}
+			else {
+				if(aboveTenSecondDifference.size()==1) {
+					return aboveTenSecondDifference.get(0);
+				}
+				else if(aboveTenSecondDifference.size()>1) {
+					return returnSongsBasedOnViews(aboveTenSecondDifference);
+				}
+				else {
+					return  null;
+				}
+			}
+		}
+	}
+
+	public static ResultsPageResponse returnSongsBasedOnViews(ArrayList<ResultsPageResponse> input) {
+		int max=0;
+		ResultsPageResponse ret=null;
+		for(ResultsPageResponse temp:input) {
+			int val=temp.getViews();
+			if(val>max) {
+				max=val;
+				ret=temp;
+			}
+		}
+		return ret;
+	}
+
+	public static ResultsPageResponse getResultsPageResponseForEachSong(Element songContainer) throws Exception {
+		String songTitleFromYoutube=getTitleFromYoutubeResultsPage(songContainer);
+		String songChannelFromYoutube=getChannelFromYoutubeResultsPage(songContainer);
+		int songViewsFromYoutube=getNumberOfViewsFromYoutubeResultsPage(songContainer);
+		String songAudioLinkFromYoutube=getAudioLinkFromYoutubeResultsPage(songContainer);
+		String songImageLinkFromYoutube=getImageLinkFromYoutubeResultsPage(songContainer);
+		int songDuration=getDurationFromYouTube(songContainer);
+
+		ResultsPageResponse returnResponseFromYoutube=new ResultsPageResponse(songTitleFromYoutube, songChannelFromYoutube, songImageLinkFromYoutube, songAudioLinkFromYoutube, songDuration, songViewsFromYoutube);
+		return returnResponseFromYoutube;
+	}
+
+	public static String getTitleFromYoutubeResultsPage(Element songContainer) throws Exception {
+		//		Elements ele=songContainer.select("a#video-title.yt-simple-endpoint.style-scope.ytd-video-renderer[title]");
+		Elements ele=songContainer.select("h3.yt-lockup-title > a[title]");
+		if(ele.size()>1 || ele.size()==0) {
+			System.out.println("Error!"+ele.size()+"elements found for title");
+			throw new Exception();
+		}
+		String songTitleFromYoutube=ele.get(0).attr("title");
+
+		return songTitleFromYoutube;
+	}
+
+	public static String getAudioLinkFromYoutubeResultsPage(Element songContainer) throws Exception{
+		//		Elements ele=songContainer.select("a#video-title.yt-simple-endpoint.style-scope.ytd-video-renderer[title]");
+		Elements ele=songContainer.select("h3.yt-lockup-title > a[title]");
+		if(ele.size()>1 || ele.size()==0) {
+			System.out.println("Error!"+ele.size()+"elements found for Audio link");
+			throw new Exception();
+		}
+		String songAudioLinkFromYoutube=ele.get(0).attr("href");
+
+		return songAudioLinkFromYoutube;
+	}
+
+	public static String getImageLinkFromYoutubeResultsPage(Element songContainer) throws Exception{
+		Elements ele=songContainer.select("span.yt-thumb-simple > img[alt]");
+		if(ele.size()>1 || ele.size()==0) {
+			System.out.println("Error!"+ele.size()+"elements found for Image link");
+			throw new Exception();
+		}
+		String songImageLinkFromYoutube=ele.get(0).attr("src");
+
+		return songImageLinkFromYoutube;
+	}
+
+	public static int getNumberOfViewsFromYoutubeResultsPage(Element songContainer) throws Exception{
+		//		Elements ele=songContainer.select("span.style-scope.ytd-video-meta-block");
+		String songViewsFromYoutube="";
+		int views;
+		Elements ele=songContainer.select("ul.yt-lockup-meta-info > li");
+		if(ele.size()>2 || ele.size()==0) {
+			System.out.println("Error!"+ele.size()+"elements found for Number of Views");
+			throw new Exception();
+		}
+		if(ele.size()==1) {
+			songViewsFromYoutube=ele.get(0).text();
+			if(!songViewsFromYoutube.contains("view")) {
+				System.out.println("Views absent!");
+				songViewsFromYoutube="0 views";
+			}
+		}
+		else if(ele.size()==2) {
+			songViewsFromYoutube=ele.get(1).text();
+			if(!songViewsFromYoutube.contains("view")) {
+				System.out.println("Views absent!");
+				songViewsFromYoutube="0 views";
+			}
+		}
+		songViewsFromYoutube=songViewsFromYoutube.substring(0, songViewsFromYoutube.indexOf("view")).trim();
+		songViewsFromYoutube=removeCommasAndReturnNumberFromString(songViewsFromYoutube);
+		views=Integer.parseInt(songViewsFromYoutube);
+		return views;
+	}
+
+	public static String removeCommasAndReturnNumberFromString(String songViewsFromYoutube) {
+		int i=0,index=0;
+		while((index=songViewsFromYoutube.indexOf(",", i))!=-1) {
+			songViewsFromYoutube=songViewsFromYoutube.substring(0, index) + songViewsFromYoutube.substring(index + 1);
+			i=index;
+		}
+		return songViewsFromYoutube;
+	}
+
+	public static String getChannelFromYoutubeResultsPage(Element songContainer) throws Exception{
+		//		Elements ele=songContainer.select("a.yt-simple-endpoint.style-scope.yt-formatted-string[spellcheck=\"false\"]");
+		Elements ele=songContainer.select("div.yt-lockup-byline > a.yt-uix-sessionlink.spf-link");
+		if(ele.size()>1 || ele.size()==0) {
+			System.out.println("Error!"+ele.size()+"elements found for channel");
+			throw new Exception();
+		}
+		String songChannelFromYoutube=ele.get(0).text();
+
+		return songChannelFromYoutube;
+	}
+
+	public static boolean checkIfResultIsPlaylistUsingJSoup(Element songContainer) {
+		Elements playlistContainer=songContainer.select("ol.yt-lockup-meta.yt-lockup-playlist-items");
+		if(playlistContainer.size()>0) {
+			return true;
+		}
+		return false;
+	}
+
+	public static int calculateDurationDifferenceBetweenYoutubeAndMSD(Element songContainer,int durationFromDB) throws Exception {
+		int durationFromYouTube=getDurationFromYouTube(songContainer);
+		return Math.abs(durationFromYouTube-durationFromDB);
+	}
+
+	public static int getDurationFromYouTube(Element songContainer) throws Exception {
+		//		Elements ele=songContainer.select("span.style-scope.ytd-thumbnail-overlay-time-status-renderer");
+		Elements ele=songContainer.select("h3.yt-lockup-title > span.accessible-description");
+		if(ele.size()>1 || ele.size()==0) {
+			System.out.println("Error!"+ele.size()+"elements found for duration");
+			throw new Exception();
+		}
+		String durationFromYoutube=ele.get(0).text();
+		int i = 0;
+		while (i < durationFromYoutube.length() && !Character.isDigit(durationFromYoutube.charAt(i))) i++;
+		durationFromYoutube=durationFromYoutube.substring(i,durationFromYoutube.length());
+		durationFromYoutube=durationFromYoutube.substring(0, durationFromYoutube.indexOf(".")) + durationFromYoutube.substring(durationFromYoutube.indexOf(".") + 1);
+		String[] splitArray=durationFromYoutube.split(":");
+		if(splitArray.length>2 || splitArray.length==0) {
+			System.out.println("Error!Split array for duration is"+splitArray.length+"..The duration was"+durationFromYoutube);
+			throw new Exception();
+		}
+		int minutes=Integer.parseInt(splitArray[0]);
+		int seconds=Integer.parseInt(splitArray[1]);
+
+		int totalSeconds=minutes*60+seconds;
+		return totalSeconds;
+	}
+
+	public static boolean checkDurationGreaterThanAnHourFromYouTube(Element songContainer) throws Exception {
+		Elements ele=songContainer.select("h3.yt-lockup-title > span.accessible-description");
+		if(ele.size()>1 || ele.size()==0) {
+			System.out.println("Error!"+ele.size()+"elements found for duration");
+			throw new Exception();
+		}
+		String durationFromYoutube=ele.get(0).text();
+		int i = 0;
+		while (i < durationFromYoutube.length() && !Character.isDigit(durationFromYoutube.charAt(i))) i++;
+		durationFromYoutube=durationFromYoutube.substring(i,durationFromYoutube.length());
+		durationFromYoutube=durationFromYoutube.substring(0, durationFromYoutube.indexOf(".")) + durationFromYoutube.substring(durationFromYoutube.indexOf(".") + 1);
+		String[] splitArray=durationFromYoutube.split(":");
+		if(splitArray.length>2 || splitArray.length==0) {
+			return true;
+		}
+		return false;
+	}
+
+	public static boolean establishMySqlConnectionWithNewMusixMatchDB(){
+		try{  
+			conmysql=DriverManager.getConnection("jdbc:mysql://localhost:3306/musixmatch_new","root","root");  
+			if(conmysql!=null)
+			{
+				System.out.println("Connected to mysql");
+			}
+		}catch(Exception e){ System.out.println(e); return false;}
+		return true;
+	}
+
+	public static boolean establishSqliteConnectionWithMusixmatch(){
+		try{
+			Class.forName("org.sqlite.JDBC");
+			connsqlite=DriverManager.getConnection("jdbc:sqlite:D:\\projectdatabases\\MUSIXMATCH\\mxm_dataset.db");
+			System.out.println("SQlite Musixmatch Connected");
+			return true;
+		}
+		catch(Exception e){
+			System.out.println("Musixmatch SQLite failed");
+		}
+		return false;
+	}
+	private static Writer returnlogger() {
+		try {
+			logger=new FileWriter("D:\\projectdatabases\\documentFromYoutubeTempAfterModification.txt");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return logger;
+	}
+
+	//	public static InputStream loadContentByHttpClient(String url)
+	//            throws ClientProtocolException, IOException {
+	//        HttpClient client = HttpClientBuilder.create().build();
+	//        HttpGet request = new HttpGet(url);
+	//        HttpResponse response = client.execute(request);
+	//        return response.getEntity().getContent();
+	//    }	
+}
