@@ -1,6 +1,0 @@
- {
-   "artist": "Jonathan King",
-   "tags": ["1","2","3"], 
-   "track_id": "TRAAAEA128F935A30D", 
-   "title": "I'll Slap Your Face (Entertainment USA Theme)"
-   }
