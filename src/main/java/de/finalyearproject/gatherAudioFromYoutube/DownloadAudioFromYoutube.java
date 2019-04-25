@@ -24,7 +24,7 @@ public class DownloadAudioFromYoutube {
 			} 
 			catch (Exception e) {
 				try {
-					Thread.sleep(500);
+					Thread.sleep(500*i);
 					System.out.println("Retrying getting audio from youtube......."+i+"because"+e.getLocalizedMessage());
 				} catch (InterruptedException e1) {
 					

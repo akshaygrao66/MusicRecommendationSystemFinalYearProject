@@ -39,8 +39,8 @@ public class DownloadAndStoreToDB {
 	static BufferedWriter logwriter = new BufferedWriter(returnlogger());
 	static Connection connsqlite=null;
 	static Connection conmysql=null;
-	final static String LASTFM_DATASET_SOURCE="F:\\\\projectdatabases\\\\LASTFM\\\\lastfm_subset";
-	final static String MSD_DATASET_SOURCE="F:\\projectdatabases\\MSD\\MillionSongSubset\\data";
+	final static String LASTFM_DATASET_SOURCE="D:\\\\projectdatabases\\\\LASTFM\\\\lastfm_subset";
+	final static String MSD_DATASET_SOURCE="D:\\projectdatabases\\MSD\\MillionSongSubset\\data";
 	public static void main(String[] args) throws SQLException, IOException, UnsupportedAudioFileException, LineUnavailableException{
 		if(!establishMySqlConnectionWithNewMusixMatchDB()) {
 			System.out.println("MYSQL connection failed");
@@ -49,12 +49,12 @@ public class DownloadAndStoreToDB {
 
 		//		Environment.defaultConfig().connectTimeout = 50000;
 		//		Environment.defaultConfig().readTimeout = 80000;
-
+		ArrayList<String> trackSongMissedDownload=new ArrayList<String>();
 		GetAttributeFromMSD getAttributesFromMSD;
 		ArrayList<String> allMSDTrackIDs=getAllUniqueTrackIDs();
-		int i=496;
+		int i=103;
 		boolean enter=false;
-		String startPoint="TRAEPGH128F9343CD8";
+		String startPoint="TRAAQIH128F428BDEA";
 		for(String eachMSDTrack:allMSDTrackIDs) {
 			if(eachMSDTrack.equals(startPoint)) {
 				enter=true;
@@ -67,11 +67,28 @@ public class DownloadAndStoreToDB {
 					System.out.println(getAttributesFromMSD);
 					optimalResponse = returnLinksForAudioAndImageDownload(getAttributesFromMSD.getSong_title(),getAttributesFromMSD.getArtist_name(),getAttributesFromMSD.getDuration(),Integer.parseInt(getAttributesFromMSD.getYear()));
 					if(optimalResponse!=null) {
-						System.out.println(optimalResponse);
-						downloadImageAndStoreAtSpecifiedPath(optimalResponse.getAudioLink(),optimalResponse.getImageLink(),eachMSDTrack);
-						//					downloadAudioAndStoreAtSpecifiedPath(optimalResponse.getAudioLink(),eachMSDTrack);
-						logwriter.write("Song number "+i+" with trackID:"+eachMSDTrack+" downloaded\n");
-						System.out.println("Song number "+i+" with trackID:"+eachMSDTrack+" downloaded");
+						if(optimalResponse.getChannel()=="" && optimalResponse.getDuration()==0 && optimalResponse.getSong_title()=="" && optimalResponse.getViews()==0) {
+							System.out.println("Song results cannot be reached.So added to missed tracks");
+							BufferedWriter logMissedResultsPageDownload = new BufferedWriter(new FileWriter("D:\\projectdatabases\\logMissedResultPageDownload.txt", true));  //Set true for append mode
+							logMissedResultsPageDownload.newLine();
+							logMissedResultsPageDownload.write(eachMSDTrack);
+							logMissedResultsPageDownload.close();
+						}
+						else
+						{
+							System.out.println(optimalResponse);
+							downloadImageAndStoreAtSpecifiedPath(optimalResponse.getAudioLink(),optimalResponse.getImageLink(),eachMSDTrack);
+							logwriter.write("Image number "+i+" with trackID:"+eachMSDTrack+" downloaded\n");
+							if(!downloadAudioAndStoreAtSpecifiedPath(optimalResponse.getAudioLink(),eachMSDTrack)) {
+								System.out.println("track"+eachMSDTrack+"song downloads cannot be reached.So added to missed tracks");
+								BufferedWriter logMissedSongDownload = new BufferedWriter(new FileWriter("D:\\projectdatabases\\logSongDownloadMissed.txt", true));  //Set true for append mode
+								logMissedSongDownload.newLine();
+								logMissedSongDownload.write(eachMSDTrack);
+								logMissedSongDownload.close();
+							}
+							logwriter.write("Song number "+i+" with trackID:"+eachMSDTrack+" downloaded\n");
+							System.out.println("Song number "+i+" with trackID:"+eachMSDTrack+" downloaded");
+						}
 					}
 					else {
 						deleteFromDB(eachMSDTrack);
@@ -103,62 +120,106 @@ public class DownloadAndStoreToDB {
 		delete.setString(1, eachMSDTrack);
 		delete.executeUpdate();
 		System.out.println("Deleted trackID:"+eachMSDTrack+" from Database");
-		FileWriter deleteLog=new FileWriter("F:\\projectdatabases\\logTrackDeletedDueToYoutubeResultsNotFound.txt");
+		FileWriter deleteLog=new FileWriter("D:\\projectdatabases\\logTrackDeletedDueToYoutubeResultsNotFound.txt");
 		deleteLog.write("Deleted trackID:"+eachMSDTrack+" from Database");
 		deleteLog.close();
 	}
 
 	@SuppressWarnings("resource")
 	public static void downloadImageAndStoreAtSpecifiedPath(String audioLink,String imageLink,String path) throws IOException {
-		downloadLargerImage(audioLink,path);
+		if(!downloadLargerImage(audioLink,path)) {
+			System.out.println("track"+path+"larger Image downloads cannot be reached.So added to missed tracks");
+			BufferedWriter logMissedLargerImageDownload = new BufferedWriter(new FileWriter("D:\\projectdatabases\\logMissedLargerImageDownloadMissed.txt", true));  //Set true for append mode
+			logMissedLargerImageDownload.newLine();
+			logMissedLargerImageDownload.write(path);
+			logMissedLargerImageDownload.close();
+		}
 		if(!imageLink.toLowerCase().contains("gif")) {
-			downloadSmallerImage(imageLink, path);
+			if(!downloadSmallerImage(imageLink, path)) {
+				System.out.println("track"+path+"smaller image downloads cannot be reached.So added to missed tracks");
+				BufferedWriter logMissedSmallerImageDownload = new BufferedWriter(new FileWriter("D:\\projectdatabases\\logMissedSmallerImageDownloadMissed.txt", true));  //Set true for append mode
+				logMissedSmallerImageDownload.newLine();
+				logMissedSmallerImageDownload.write(path);
+				logMissedSmallerImageDownload.close();
+			}
 		}
 	}
-	public static void downloadLargerImage(String imageLink,String path) throws IOException {
-		imageLink="https://www.youtube.com"+imageLink;
-		URL url;
-		String r;
-		url = new URL(imageLink);
-		String s=url.getQuery();
-		r=s.substring(2);
-		URL rurl = new URL("http://img.youtube.com/vi/" + r +"/0.jpg");
-		InputStream inputStream = null;
-		OutputStream outputStream = null;
+	public static boolean downloadLargerImage(String imageLink,String path) {
 
-		inputStream = rurl.openStream();
-		outputStream = new FileOutputStream("F:\\temporary_audio_image_folder\\images\\Larger Image\\"+path+".jpg");
+		for (int i = 0; i < 10; i++) {
+			try {
+				imageLink="https://www.youtube.com"+imageLink;
+				URL url;
+				String r;
+				url = new URL(imageLink);
+				String s=url.getQuery();
+				r=s.substring(2);
+				URL rurl = new URL("http://img.youtube.com/vi/" + r +"/0.jpg");
+				InputStream inputStream = null;
+				OutputStream outputStream = null;
+				inputStream = rurl.openStream();
+				outputStream = new FileOutputStream("F:\\temporary_audio_image_folder\\images\\Larger Image\\"+path+".jpg");
 
-		byte[] buffer = new byte[2048];
-		int length;
+				byte[] buffer = new byte[2048];
+				int length;
 
-		while ((length = inputStream.read(buffer)) != -1) {
-			outputStream.write(buffer, 0, length);
+				while ((length = inputStream.read(buffer)) != -1) {
+					outputStream.write(buffer, 0, length);
 
+				}
+				System.out.println(path+" Larger Image Downloaded!!!");
+				Thread.sleep(1000);
+				return true;
+			}
+			catch(Exception e) {
+				try {
+					Thread.sleep(500*i);
+					System.out.println("Retrying getting larger image from youtube......."+i+"because"+e.getLocalizedMessage());
+				} catch (InterruptedException e1) {
+
+				}
+				continue;
+			}
 		}
-		System.out.println(path+" Larger Image Downloaded!!!");
+		return false;
 	}
 
-	public static void downloadSmallerImage(String imageLink,String path) throws IOException{
-		URL rurl = new URL(imageLink);
-		InputStream inputStream = null;
-		OutputStream outputStream = null;
+	public static boolean downloadSmallerImage(String imageLink,String path) throws IOException{
+		for (int i = 0; i < 10; i++) {
+			try {
+				URL rurl = new URL(imageLink);
+				InputStream inputStream = null;
+				OutputStream outputStream = null;
 
-		inputStream = rurl.openStream();
-		outputStream = new FileOutputStream("F:\\temporary_audio_image_folder\\images\\Smaller Image\\"+path+".jpg");
+				inputStream = rurl.openStream();
+				outputStream = new FileOutputStream("F:\\temporary_audio_image_folder\\images\\Smaller Image\\"+path+".jpg");
 
-		byte[] buffer = new byte[2048];
-		int length;
+				byte[] buffer = new byte[2048];
+				int length;
 
-		while ((length = inputStream.read(buffer)) != -1) {
-			outputStream.write(buffer, 0, length);
+				while ((length = inputStream.read(buffer)) != -1) {
+					outputStream.write(buffer, 0, length);
 
+				}
+				System.out.println(path+" Smaller Image Downloaded!!!");
+				Thread.sleep(1000);
+				return true;
+			}
+			catch(Exception e) {
+				try {
+					Thread.sleep(500*i);
+					System.out.println("Retrying getting smaller image from youtube......."+i+"because"+e.getLocalizedMessage());
+				} catch (InterruptedException e1) {
+
+				}
+				continue;
+			}
 		}
-		System.out.println(path+" Smaller Image Downloaded!!!");
+		return false;
 	}
-	public static void downloadAudioAndStoreAtSpecifiedPath(String audioLink,String path) {
+	public static boolean downloadAudioAndStoreAtSpecifiedPath(String audioLink,String path) {
 		DownloadAudioFromYoutube downloadAudio=new DownloadAudioFromYoutube();
-		downloadAudio.downloadAudioFromYoutube("https://www.youtube.com"+audioLink,path);
+		return downloadAudio.downloadAudioFromYoutube("https://www.youtube.com"+audioLink,path);
 	}
 
 	public static ArrayList<String> getAllUniqueTrackIDs() throws SQLException{
@@ -176,10 +237,30 @@ public class DownloadAndStoreToDB {
 		// final Document document = Jsoup.connect("https://www.youtube.com/results?search_query=faded").get();
 		String url   = "http://www.youtube.com/results";
 		String query = songTitle+" "+artist_Name; //This is the search string which is searched in youtube
-
-		Document document = Jsoup.connect(url)
-				.data("search_query", query)
-				.get();
+		int retry=0;
+		boolean flag=true;
+		Document document=null;
+		for (retry = 0; retry < 5; retry++) {
+			try {
+				document = Jsoup.connect(url)
+						.data("search_query", query)
+						.get();
+				Thread.sleep(1000);
+				flag=true;
+			} catch (IOException e) {
+				try {
+					Thread.sleep(500*retry);
+					System.out.println("Retrying getting results page......."+retry+"because"+e.getLocalizedMessage());
+					flag=false;
+				} catch (InterruptedException e1) {
+				}
+				continue;
+			}
+		}
+		if(flag==false) {
+			ResultsPageResponse dummyResponse=new ResultsPageResponse("", "", "", "", 0, 0);
+			return dummyResponse;
+		}
 
 		ArrayList<ResultsPageResponse> resultPageResponsesFromYoutube=new ArrayList<ResultsPageResponse>();
 		resultPageResponsesFromYoutube.clear();
@@ -575,7 +656,7 @@ public class DownloadAndStoreToDB {
 
 	private static Writer returnlogger() {
 		try {
-			logger=new FileWriter("F:\\projectdatabases\\logWhereDidImageDownloadStop.txt");
+			logger=new FileWriter("D:\\projectdatabases\\logWhereDidDownloadStop.txt");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
