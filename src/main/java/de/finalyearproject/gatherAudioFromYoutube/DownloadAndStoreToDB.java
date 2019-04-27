@@ -32,7 +32,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import de.finalyearproject.model.Youtube.ResultsPageResponse;
-import de.finalyearproject.preprocessing.GetAttributeFromMSD;
+import de.finalyearproject.preprocessing.GetAllAttributesFromDB;
 
 public class DownloadAndStoreToDB {
 	static FileWriter logger=null;
@@ -47,10 +47,7 @@ public class DownloadAndStoreToDB {
 			return;
 		}
 
-		//		Environment.defaultConfig().connectTimeout = 50000;
-		//		Environment.defaultConfig().readTimeout = 80000;
-		ArrayList<String> trackSongMissedDownload=new ArrayList<String>();
-		GetAttributeFromMSD getAttributesFromMSD;
+		GetAllAttributesFromDB getAttributesFromMSD;
 		ArrayList<String> allMSDTrackIDs=getAllUniqueTrackIDs();
 		int i=103;
 		boolean enter=false;
@@ -60,7 +57,7 @@ public class DownloadAndStoreToDB {
 				enter=true;
 			}
 			if(enter) {
-				getAttributesFromMSD=new GetAttributeFromMSD(eachMSDTrack);
+				getAttributesFromMSD=new GetAllAttributesFromDB(eachMSDTrack);
 
 				ResultsPageResponse optimalResponse=new ResultsPageResponse("", "", "", "", 1, 0);
 				try {
