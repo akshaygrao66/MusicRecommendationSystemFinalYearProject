@@ -1,8 +1,10 @@
 package de.finalyearproject.preprocessing;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -20,7 +22,7 @@ public class StoreAllAttributesIntoDB {
 	final static String LASTFM_DATASET_SOURCE="D:\\\\projectdatabases\\\\LASTFM\\\\lastfm_subset";
 	final static String MSD_DATASET_SOURCE="D:\\projectdatabases\\MSD\\MillionSongSubset\\data";
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, SQLException {
 		if(!establishMySqlConnectionWithNewMusixMatchDB()) {
 			System.out.println("MYSQL connection failed");
 			return;
@@ -35,66 +37,72 @@ public class StoreAllAttributesIntoDB {
 			e.printStackTrace();
 		}
 		int missed=3,stored=2040;
-		boolean enter=false;
+		boolean enter=true;
 		String startPoint="TRBDMAU128F935960B";
 		for(String eachMSDTrack:allMSDTrackIDs) {
 			if(enter) {
-				PreparedStatement prepLyrics;
-				try {
-					prepLyrics = conmysql.prepareStatement("select score from lyrics_score where track_id=?");
-					prepLyrics.setString(1, eachMSDTrack);
-					ResultSet res=prepLyrics.executeQuery();
-					Double lyricsScore=0.0;
-					if(res.next()) {
-						lyricsScore=res.getDouble("score");
-					}
-					else {
-						System.out.println("Error in fetching lyrics score...in track"+eachMSDTrack);
-						logwriter.write("Error in fetching lyrics score...in track"+eachMSDTrack);
-						missed++;
-						continue;
-					}
-
-					prepLyrics = conmysql.prepareStatement("select mxm_tid from lyrics where track_id=?");
-					prepLyrics.setString(1, eachMSDTrack);
-					res=prepLyrics.executeQuery();
-					int mxm_tid=0;
-					if(res.next()) {
-						mxm_tid=res.getInt("mxm_tid");
-					}
-					else{
-						System.out.println("Error in musixmatch ID...in track"+eachMSDTrack);
-						logwriter.write("Error in musixmatch ID...in track"+eachMSDTrack);
-						missed++;
-						continue;
-					}
-
-					getAttributesFromMSD=new GetAttributeFromMSD(eachMSDTrack);
-
-					PreparedStatement prepInsert=conmysql.prepareStatement("INSERT INTO `musixmatch_new`.`allattributes` (`track_id`, `mxm_tid`, `tempo`, `mode_confidence`, `duration`, `loudness`, `song_hottness`, `year`, `artist_familiarity`, `artist_name`, `artist_hottness`, `song_title`, `lyrics_score`) VALUES (?, ? , ? , ? , ? , ? , ? , ? , ? ,? , ?, ?, ?)");
-					prepInsert.setString(1,eachMSDTrack );
-					prepInsert.setInt(2,mxm_tid);
-					prepInsert.setDouble(3, getAttributesFromMSD.getTempo());
-					prepInsert.setDouble(4, getAttributesFromMSD.getMode_confidence());
-					prepInsert.setDouble(5, getAttributesFromMSD.getDuration());
-					prepInsert.setDouble(6, getAttributesFromMSD.getLoudness());
-					prepInsert.setDouble(7, getAttributesFromMSD.getSong_hottness());
-					prepInsert.setInt(8, Integer.parseInt(getAttributesFromMSD.getYear()));
-					prepInsert.setDouble(9, getAttributesFromMSD.getArtist_familiarity());
-					prepInsert.setString(10, getAttributesFromMSD.getArtist_name());
-					prepInsert.setDouble(11, getAttributesFromMSD.getArtist_hotness());
-					prepInsert.setString(12, getAttributesFromMSD.getSong_title());
-					prepInsert.setDouble(13, lyricsScore);
-
-					prepInsert.executeUpdate();
-					System.out.println("TrackID stored is "+eachMSDTrack+" of number "+stored+" and missed is"+missed);
-					logwriter.write("TrackID stored is "+eachMSDTrack+" of number "+stored+" and missed is"+missed);
-					stored++;
-				} catch (SQLException e) {
-					// TODO Auto-generated catch block
-					logwriter.close();
-					e.printStackTrace();
-				}
+///				PreparedStatement prepLyrics;
+//				try {
+//					prepLyrics = conmysql.prepareStatement("select score from lyrics_score where track_id=?");
+//					prepLyrics.setString(1, eachMSDTrack);
+//					ResultSet res=prepLyrics.executeQuery();
+//					Double lyricsScore=0.0;
+//					if(res.next()) {
+//						lyricsScore=res.getDouble("score");
+//					}
+//					else {
+//						System.out.println("Error in fetching lyrics score...in track"+eachMSDTrack);
+//						logwriter.write("Error in fetching lyrics score...in track"+eachMSDTrack);
+//						missed++;
+//						continue;
+//					}
+//
+//					prepLyrics = conmysql.prepareStatement("select mxm_tid from lyrics where track_id=?");
+//					prepLyrics.setString(1, eachMSDTrack);
+//					res=prepLyrics.executeQuery();
+//					int mxm_tid=0;
+//					if(res.next()) {
+//						mxm_tid=res.getInt("mxm_tid");
+//					}
+//					else{
+//						System.out.println("Error in musixmatch ID...in track"+eachMSDTrack);
+//						logwriter.write("Error in musixmatch ID...in track"+eachMSDTrack);
+//						missed++;
+//						continue;
+//					}
+//
+//					getAttributesFromMSD=new GetAttributeFromMSD(eachMSDTrack);
+//
+//					PreparedStatement prepInsert=conmysql.prepareStatement("INSERT INTO `musixmatch_new`.`allattributes` (`track_id`, `mxm_tid`, `tempo`, `mode_confidence`, `duration`, `loudness`, `song_hottness`, `year`, `artist_familiarity`, `artist_name`, `artist_hottness`, `song_title`, `lyrics_score`) VALUES (?, ? , ? , ? , ? , ? , ? , ? , ? ,? , ?, ?, ?)");
+//					prepInsert.setString(1,eachMSDTrack );
+//					prepInsert.setInt(2,mxm_tid);
+//					prepInsert.setDouble(3, getAttributesFromMSD.getTempo());
+//					prepInsert.setDouble(4, getAttributesFromMSD.getMode_confidence());
+//					prepInsert.setDouble(5, getAttributesFromMSD.getDuration());
+//					prepInsert.setDouble(6, getAttributesFromMSD.getLoudness());
+//					prepInsert.setDouble(7, getAttributesFromMSD.getSong_hottness());
+//					prepInsert.setInt(8, Integer.parseInt(getAttributesFromMSD.getYear()));
+//					prepInsert.setDouble(9, getAttributesFromMSD.getArtist_familiarity());
+//					prepInsert.setString(10, getAttributesFromMSD.getArtist_name());
+//					prepInsert.setDouble(11, getAttributesFromMSD.getArtist_hotness());
+//					prepInsert.setString(12, getAttributesFromMSD.getSong_title());
+//					prepInsert.setDouble(13, lyricsScore);
+//
+//					prepInsert.executeUpdate();
+//					System.out.println("TrackID stored is "+eachMSDTrack+" of number "+stored+" and missed is"+missed);
+//					logwriter.write("TrackID stored is "+eachMSDTrack+" of number "+stored+" and missed is"+missed);
+//					stored++;
+//				} catch (SQLException e) {
+//					// TODO Auto-generated catch block
+//					logwriter.close();
+//					e.printStackTrace();
+//				}
+				String artist_id=getAttributeFromMsd(eachMSDTrack,"get_artist_id");
+				artist_id=artist_id.substring(1);
+				PreparedStatement statement=conmysql.prepareStatement("update allattributes set artist_id=? where track_id=?");
+				statement.setString(1, artist_id);
+				statement.setString(2, eachMSDTrack);
+				statement.executeUpdate();
 			}
 			if(eachMSDTrack.equals(startPoint)) {
 				enter=true;
@@ -113,7 +121,26 @@ public class StoreAllAttributesIntoDB {
 		}
 		return trackIdsUnique;
 	}
+	public static String getAttributeFromMsd(String name,String commandFromCaller) {
+		String s=null;
+		String output="";
+		try {
 
+			String command = "python C:\\Users\\aksha\\OneDrive\\Desktop\\Million-Song-Dataset-HDF5-to-CSV-master\\hdf5_getters.py D:\\projectdatabases\\MSD\\MillionSongSubset\\data\\"+name+".h5 "+commandFromCaller;	
+			Process p = Runtime.getRuntime().exec(command);
+			BufferedReader stdInput = new BufferedReader(new 
+					InputStreamReader(p.getInputStream()));
+
+			BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+
+			while ((s = stdInput.readLine()) != null) {
+				output=output+s;	               
+			}
+		}catch(Exception e ) {
+			System.out.println(e);
+		}
+		return output;
+	}
 	public static boolean establishMySqlConnectionWithNewMusixMatchDB(){
 		try{  
 			conmysql=DriverManager.getConnection("jdbc:mysql://localhost:3306/musixmatch_new","root","root");  

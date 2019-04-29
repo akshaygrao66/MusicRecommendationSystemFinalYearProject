@@ -17,7 +17,6 @@ public class GetAttributeFromMSD {
 	private String song_title;
 
 
-
 	public Double getTempo() {
 		return tempo;
 	}

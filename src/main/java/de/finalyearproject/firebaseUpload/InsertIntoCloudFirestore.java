@@ -21,6 +21,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
 
+import de.finalyearproject.preprocessing.GetAllAttributesFromDB;
 import de.finalyearproject.preprocessing.GetAttributeFromMSD;
 import de.finalyearproject.uploadmodel.FirestoreMusicValueModel;
 
@@ -34,8 +35,8 @@ public class InsertIntoCloudFirestore {
 		    .setProjectId("finalyearproject-f9cf5")
 		    .build();
 		FirebaseApp.initializeApp(options);
-		final String dname="TRAAAAW128F429D538";
-		GetAttributeFromMSD attributesFromMsd=new GetAttributeFromMSD(dname);
+		final String dname="TRAAABD128F429CF47";
+		GetAllAttributesFromDB attributesFromMsd=new GetAllAttributesFromDB(dname);
 		Firestore db = FirestoreClient.getFirestore();
 		FirestoreMusicValueModel musicValueModel=new FirestoreMusicValueModel();
 		BeanUtils.copyProperties(musicValueModel, attributesFromMsd);
