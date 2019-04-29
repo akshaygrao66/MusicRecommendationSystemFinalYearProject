@@ -21,6 +21,17 @@ public class GetAllAttributesFromDB {
 	private String song_title;
 	private Double lyrics_score;
 	private int mxm_tid;
+	private String artist_id;
+
+
+	public String getArtist_id() {
+		return artist_id;
+	}
+
+
+	public void setArtist_id(String artist_id) {
+		this.artist_id = artist_id;
+	}
 
 
 	public Double getLyrics_score() {
@@ -47,15 +58,13 @@ public class GetAllAttributesFromDB {
 		return tempo;
 	}
 
-
-
 	@Override
 	public String toString() {
 		return "GetAllAttributesFromDB [tempo=" + tempo + ", mode_confidence=" + mode_confidence + ", duration="
 				+ duration + ", loudness=" + loudness + ", song_hottness=" + song_hottness + ", year=" + year
 				+ ", artist_familiarity=" + artist_familiarity + ", artist_name=" + artist_name + ", artist_hotness="
 				+ artist_hotness + ", song_title=" + song_title + ", lyrics_score=" + lyrics_score + ", mxm_tid="
-				+ mxm_tid + "]";
+				+ mxm_tid + ", artist_id=" + artist_id + "]";
 	}
 
 
@@ -185,6 +194,7 @@ public class GetAllAttributesFromDB {
 				this.song_title=result.getString("song_title");
 				this.lyrics_score=result.getDouble("lyrics_score");
 				this.mxm_tid=result.getInt("mxm_tid");
+				this.artist_id=result.getString("artist_id");
 			}
 
 		}catch(Exception e) {
@@ -204,7 +214,6 @@ public class GetAllAttributesFromDB {
 
 	public static String getAttributeFromMsdDB(String name) {
 		return name;
-
 	}
 
 	public static boolean establishMySqlConnectionWithNewMusixMatchDB(){
