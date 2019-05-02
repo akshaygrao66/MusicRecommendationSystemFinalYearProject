@@ -189,8 +189,9 @@
 	var currentfirebaseuserid;
 	var playlistnames = [];
 	var tempsearcharray = [];
-  var storage = firebase.storage();
+	var storage = firebase.storage();
 	var storageRef = storage.refFromURL("gs://finalyearproject-f9cf5.appspot.com/");
+	var global_playingSongId;
 
 
 	window.addEventListener('online', updateinternetfailure("online"));
@@ -382,7 +383,7 @@
 	function playSameArtistSongs(str) {
 		if (str != 'default') {
 			currerntlyplayingartistid = str;
-			db.collection("ArtistIdNamePairs").doc('\''+str+'\'').get().then(function(doc) {
+			db.collection("ArtistIdNamePairs").doc('\'' + str + '\'').get().then(function(doc) {
 				currentlyplayingartistname = doc.data().FirestoreArtistIdModel.artist_name;
 				document.getElementById("currentplayingplaylistname").innerHTML = doc.data().FirestoreArtistIdModel.artist_name + " Songs";
 			});
@@ -392,11 +393,11 @@
 
 		musicidarray = [];
 		musicpaircontentarray = [];
-		db.collection("MusicIdNamePairs").where('FireStoreMusicValueModel.artist_id','==',currerntlyplayingartistid).get().then((querySnapshot) => {
+		db.collection("MusicIdNamePairs").where('FireStoreMusicValueModel.artist_id', '==', currerntlyplayingartistid).get().then((querySnapshot) => {
 			querySnapshot.forEach((doc) => {
 				console.log("--------------------------->" + doc.data().FireStoreMusicValueModel.artist_id);
-					musicidarray.push(doc.id);
-					musicpaircontentarray.push(doc);
+				musicidarray.push(doc.id);
+				musicpaircontentarray.push(doc);
 			});
 			var cont = document.getElementById("playListContainer");
 			while (cont.hasChildNodes()) {
@@ -417,34 +418,34 @@
 			var downloadurl = songUrl;
 			storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
 				var songimageurl = songThumbnailUrl;
-        storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
-          var songImageUrlLarge=songThumbnailUrlLarge;
-          var songname = dref.data().FireStoreMusicValueModel.song_title;
-          var artistid = dref.data().FireStoreMusicValueModel.artist_id;
-          fillSameArtistSongs(artistid);
-          //put current artist details pending here
-          db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-            name = doc.data().FirestoreArtistIdModel.artist_name;
-						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
-						var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
-            updateArtistImage(artistImageUrl1, name,artistImageUrl2);
-            setSongDetails(songname, name, songimageurl,songImageUrlLarge);
-            playSongById(downloadurl, isplay);
-          });
-        }).catch(function (error){
-                var songImageUrlLarge=songimageurl;
-                var songname = dref.data().FireStoreMusicValueModel.song_title;
-                var artistid = dref.data().FireStoreMusicValueModel.artist_name;
-                fillSameArtistSongs(artistid);
-                db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-                  var name = doc.data().FirestoreArtistIdModel.artist_name;
-      						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
-									var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
-									updateArtistImage(artistImageUrl1, name,artistImageUrl2);
-                  setSongDetails(songname, name, songimageurl,songImageUrlLarge);
-                  playSongById(downloadurl, "play");
-                });
-        });
+				storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
+					var songImageUrlLarge = songThumbnailUrlLarge;
+					var songname = dref.data().FireStoreMusicValueModel.song_title;
+					var artistid = dref.data().FireStoreMusicValueModel.artist_id;
+					fillSameArtistSongs(artistid);
+					//put current artist details pending here
+					db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+						name = doc.data().FirestoreArtistIdModel.artist_name;
+						var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+						var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+						updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+						setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+						playSongById(downloadurl, isplay);
+					});
+				}).catch(function(error) {
+					var songImageUrlLarge = songimageurl;
+					var songname = dref.data().FireStoreMusicValueModel.song_title;
+					var artistid = dref.data().FireStoreMusicValueModel.artist_name;
+					fillSameArtistSongs(artistid);
+					db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+						var name = doc.data().FirestoreArtistIdModel.artist_name;
+						var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+						var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+						updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+						setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+						playSongById(downloadurl, "play");
+					});
+				});
 			}).catch(function(error) {
 
 			});
@@ -457,8 +458,6 @@
 		document.getElementById("songloadstatus").style.display = "none";
 	});
 
-
-
 	function popular_and_playListSongListGenerator(mode, title, artistname, imageurl, songid) {
 		var maincontainer;
 		if (mode == "p") {
@@ -466,7 +465,7 @@
 		} else {
 			maincontainer = document.getElementById("playListContainer");
 		}
-		
+
 		var songcontainer = document.createElement('div');
 		songcontainer.className = "track";
 
@@ -501,8 +500,6 @@
 		titlecontainer.appendChild(ti);
 		songcontainer.appendChild(titlecontainer);
 
-
-
 		var explicitcontainer = document.createElement('button');
 		explicitcontainer.className = "track__explicit";
 		explicitcontainer.id = songid;
@@ -512,6 +509,7 @@
 		spancontainer.setAttribute("style", "color:#fff");
 		var exp = document.createTextNode("Play");
 		spancontainer.appendChild(exp);
+		
 		explicitcontainer.appendChild(spancontainer);
 		songcontainer.appendChild(explicitcontainer);
 
@@ -519,51 +517,67 @@
 		playcontainer.className = "track__plays";
 		var tplay = document.createTextNode(artistname);
 		playcontainer.appendChild(tplay);
-		songcontainer.appendChild(playcontainer);
-
+		//songcontainer.appendChild(playcontainer);
+		titlecontainer.appendChild(playcontainer);
+		
+		var playAnimationContainer=document.createElement('div');
+		playAnimationContainer.innerHTML = "<svg style='display:none;margin-left:15px;' id=animation"+songid+" width='16px' height='16px' viewBox='0 0 16 16' version='1.1'"+
+		" xmlns='http://www.w3.org/2000/svg'" +
+			"xmlns:xlink='http://www.w3.org/1999/xlink'>" +
+			"<defs></defs>" +
+			"<g id='icon-equalizer-anim' fill='#1ed760'>" +
+			"<rect class='eq__bar' id='eq1' x='1' y='8' width='4' height='8'></rect>" +
+			"<rect class='eq__bar' id='eq2' x='6' y='1' width='4' height='15'></rect>" +
+			"<rect class='eq__bar' id='eq3' x='11' y='4' width='4' height='12'></rect>" +
+			"</g>" +
+			"</svg>";
+		songcontainer.appendChild(playAnimationContainer);
+		
 		//maincontainer.appendChild(explicitcontainer);
 		maincontainer.appendChild(songcontainer);
 
 		explicitcontainer.addEventListener('click', function() {
 			var sid = this.id;
+			//this.getElementsByTagName('span')[0].innerHTML="Pause";
+			//this.getElementsByTagName('svg')[0].style.display="inline";
 			db.collection("MusicIdNamePairs").doc(sid).get().then(function(dref) {
-        storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
-          var downloadurl =songUrl;
-          storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
-            var songimageurl =songThumbnailUrl;
-            storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
-              var songImageUrlLarge=songThumbnailUrlLarge;
-              var songname = dref.data().FireStoreMusicValueModel.song_title;
-              var artistid = dref.data().FireStoreMusicValueModel.artist_id;
-              fillSameArtistSongs(artistid);
-              db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-                var name = doc.data().FirestoreArtistIdModel.artist_name;
-                var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
-								var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
-								updateArtistImage(artistImageUrl1, name,artistImageUrl2);
-                setSongDetails(songname, name, songimageurl,songImageUrlLarge);
-                playSongById(downloadurl, "play");
-              });
-            }).catch(function (error){
-                  var songImageUrlLarge=songimageurl;
-                  var songname = dref.data().FireStoreMusicValueModel.song_title;
-                  var artistid = dref.data().FireStoreMusicValueModel.artist_name;
-                  fillSameArtistSongs(artistid);
-                  db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-                    var name = doc.data().FirestoreArtistIdModel.artist_name;
-        						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
-										var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
-										updateArtistImage(artistImageUrl1, name,artistImageUrl2);
-                    setSongDetails(songname, name, songimageurl,songImageUrlLarge);
-                    playSongById(downloadurl, "play");
-                  });
-              });
-          }).catch(function (error){
-            
-            });
-        }).catch(function (error){
-          
-        });
+				storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
+					var downloadurl = songUrl;
+					storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
+						var songimageurl = songThumbnailUrl;
+						storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
+							var songImageUrlLarge = songThumbnailUrlLarge;
+							var songname = dref.data().FireStoreMusicValueModel.song_title;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_id;
+							fillSameArtistSongs(artistid);
+							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+								var name = doc.data().FirestoreArtistIdModel.artist_name;
+								var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+								setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+								playSongById(downloadurl, "play");
+							});
+						}).catch(function(error) {
+							var songImageUrlLarge = songimageurl;
+							var songname = dref.data().FireStoreMusicValueModel.song_title;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_name;
+							fillSameArtistSongs(artistid);
+							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+								var name = doc.data().FirestoreArtistIdModel.artist_name;
+								var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+								setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+								playSongById(downloadurl, "play");
+							});
+						});
+					}).catch(function(error) {
+
+					});
+				}).catch(function(error) {
+
+				});
 			});
 		});
 
@@ -598,35 +612,34 @@
 			var url;
 			if (mode == "p") {
 				db.collection("MusicIdNamePairs").doc(popularsongsrefarray[i]).get().then(function(doc) {
-						name = doc.data().FireStoreMusicValueModel.song_title;
-						artistid = doc.data().FireStoreMusicValueModel.artist_id;
-						storageRef.child('SongThumbnails/smallThumbnail/' + doc.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
-							url = songThumbnailUrl;
-							db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-								artistname = doc.data().FirestoreArtistIdModel.artist_name;
-								popular_and_playListSongListGenerator("p", name, artistname, url, popularsongsrefarray[i]);
-							});
-						}).catch(function(error) {
-
+					name = doc.data().FireStoreMusicValueModel.song_title;
+					artistid = doc.data().FireStoreMusicValueModel.artist_id;
+					storageRef.child('SongThumbnails/smallThumbnail/' + doc.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
+						url = songThumbnailUrl;
+						db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+							artistname = doc.data().FirestoreArtistIdModel.artist_name;
+							popular_and_playListSongListGenerator("p", name, artistname, url, popularsongsrefarray[i]);
 						});
+					}).catch(function(error) {
+
+					});
 				});
-		}
-		else if (mode == "c") {
-			db.collection("MusicIdNamePairs").doc(musicidarray[i]).get().then(function(doc) {
-				name = doc.data().FireStoreMusicValueModel.song_title;
-				artistid = doc.data().FireStoreMusicValueModel.artist_id;
-        storageRef.child('SongThumbnails/smallThumbnail/' + doc.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
-          url = songThumbnailUrl;
-          db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-            artistname = doc.data().FirestoreArtistIdModel.artist_name;
-            popular_and_playListSongListGenerator("c", name, artistname, url, musicidarray[i]);
-          });
-        }).catch(function (error){
-          
-          });
-			});
-		}
-	};
+			} else if (mode == "c") {
+				db.collection("MusicIdNamePairs").doc(musicidarray[i]).get().then(function(doc) {
+					name = doc.data().FireStoreMusicValueModel.song_title;
+					artistid = doc.data().FireStoreMusicValueModel.artist_id;
+					storageRef.child('SongThumbnails/smallThumbnail/' + doc.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
+						url = songThumbnailUrl;
+						db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+							artistname = doc.data().FirestoreArtistIdModel.artist_name;
+							popular_and_playListSongListGenerator("c", name, artistname, url, musicidarray[i]);
+						});
+					}).catch(function(error) {
+
+					});
+				});
+			}
+		};
 	}
 
 	function addNewPlaylist() {
@@ -763,44 +776,44 @@
 			closesearchmodal();
 			var sid = this.id.substring(0, this.id.length - 1);
 			db.collection("MusicIdNamePairs").doc(sid).get().then(function(dref) {
-        storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
-          var downloadurl = songUrl;
-          storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
-            var songimageurl = songThumbnailUrl;
-            storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
-              var songImageUrlLarge=songThumbnailUrlLarge;
-              var songname = dref.data().FireStoreMusicValueModel.song_title;
-              var artistid = dref.data().FireStoreMusicValueModel.artist_id;
-              fillSameArtistSongs(artistid);
-              db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-                var name = doc.data().FirestoreArtistIdModel.artist_name;
-								var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
-								var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
-								updateArtistImage(artistImageUrl1, name,artistImageUrl2);
-                setSongDetails(songname, name, songimageurl,songImageUrlLarge);
-                playSongById(downloadurl, "play");
-              });
-            }).catch(function (error){
-                  var songImageUrlLarge=songimageurl;
-                  var songname = dref.data().FireStoreMusicValueModel.song_title;
-                  var artistid = dref.data().FireStoreMusicValueModel.artist_name;
-                  fillSameArtistSongs(artistid);
-                  db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-                    var name = doc.data().FirestoreArtistIdModel.artist_name;
-        						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
-										var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
-										updateArtistImage(artistImageUrl1, name,artistImageUrl2);
-                    setSongDetails(songname, name, songimageurl,songImageUrlLarge);
-                    playSongById(downloadurl, "play");
-                  });
-              });
-          }).catch(function (error){
-            
-            });
-          
-        }).catch(function (error){
-          
-          });
+				storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
+					var downloadurl = songUrl;
+					storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
+						var songimageurl = songThumbnailUrl;
+						storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
+							var songImageUrlLarge = songThumbnailUrlLarge;
+							var songname = dref.data().FireStoreMusicValueModel.song_title;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_id;
+							fillSameArtistSongs(artistid);
+							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+								var name = doc.data().FirestoreArtistIdModel.artist_name;
+								var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+								setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+								playSongById(downloadurl, "play");
+							});
+						}).catch(function(error) {
+							var songImageUrlLarge = songimageurl;
+							var songname = dref.data().FireStoreMusicValueModel.song_title;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_name;
+							fillSameArtistSongs(artistid);
+							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+								var name = doc.data().FirestoreArtistIdModel.artist_name;
+								var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+								setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+								playSongById(downloadurl, "play");
+							});
+						});
+					}).catch(function(error) {
+
+					});
+
+				}).catch(function(error) {
+
+				});
 			});
 		});
 		//document.getElementById("myDropdown").classList.toggle("show");
@@ -841,10 +854,16 @@
 				document.getElementById('audiosource').play();
 				document.getElementById('showplay').style.display = "none";
 				document.getElementById('showpause').style.display = "block";
+				if(global_playingSongId!=null){
+					document.getElementById("animation"+global_playingSongId).style.display="inline";
+				}
 			} else if (mode == 'pause') {
 				document.getElementById('audiosource').pause();
 				document.getElementById('showplay').style.display = "block";
 				document.getElementById('showpause').style.display = "none";
+				if(global_playingSongId!=null){
+					document.getElementById("animation"+global_playingSongId).style.display="none";
+				}
 			}
 		} else if (loaded == "false") {
 			document.getElementById("songloadstatus").style.display = "block";
@@ -906,41 +925,41 @@
 		explicitcontainer.addEventListener('click', function() {
 			var sid = this.id;
 			db.collection("MusicIdNamePairs").doc(sid).get().then(function(dref) {
-        storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
-          var downloadurl = songUrl;
-          storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
-            var songimageurl = songThumbnailUrl;
-            storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
-              var songImageUrlLarge=songThumbnailUrlLarge;
-              var songname = dref.data().FireStoreMusicValueModel.song_title;
-              var artistid = dref.data().FireStoreMusicValueModel.artist_name;
-              fillSameArtistSongs(artistid);
-              db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-                var name = doc.data().FirestoreArtistIdModel.artist_name;
-    						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
-								var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
-								updateArtistImage(artistImageUrl1, name,artistImageUrl2);
-                setSongDetails(songname, name, songimageurl,songImageUrlLarge);
-                playSongById(downloadurl, "play");
-              });
-            }).catch(function (error){
-                var songImageUrlLarge=songimageurl;
-                var songname = dref.data().FireStoreMusicValueModel.song_title;
-                var artistid = dref.data().FireStoreMusicValueModel.artist_name;
-                fillSameArtistSongs(artistid);
-                db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
-                  var name = doc.data().FirestoreArtistIdModel.artist_name;
-      						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
-									var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
-									updateArtistImage(artistImageUrl1, name,artistImageUrl2);
-                  setSongDetails(songname, name, songimageurl,songImageUrlLarge);
-                  playSongById(downloadurl, "play");
-                });
-              });
-          });
-        }).catch(function (error){
-          
-          });
+				storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
+					var downloadurl = songUrl;
+					storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
+						var songimageurl = songThumbnailUrl;
+						storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
+							var songImageUrlLarge = songThumbnailUrlLarge;
+							var songname = dref.data().FireStoreMusicValueModel.song_title;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_name;
+							fillSameArtistSongs(artistid);
+							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+								var name = doc.data().FirestoreArtistIdModel.artist_name;
+								var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+								setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+								playSongById(downloadurl, "play");
+							});
+						}).catch(function(error) {
+							var songImageUrlLarge = songimageurl;
+							var songname = dref.data().FireStoreMusicValueModel.song_title;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_name;
+							fillSameArtistSongs(artistid);
+							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+								var name = doc.data().FirestoreArtistIdModel.artist_name;
+								var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+								setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+								playSongById(downloadurl, "play");
+							});
+						});
+					});
+				}).catch(function(error) {
+
+				});
 			});
 		});
 	}
@@ -951,7 +970,7 @@
 		while (cont.hasChildNodes()) {
 			cont.removeChild(cont.firstChild);
 		}
-		db.collection("MusicIdNamePairs").where("FireStoreMusicValueModel.artist_id","==",artistid).get().then((querySnapshot) => {
+		db.collection("MusicIdNamePairs").where("FireStoreMusicValueModel.artist_id", "==", artistid).get().then((querySnapshot) => {
 			querySnapshot.forEach((doc) => {
 				console.log("=================>" + doc.data().FireStoreMusicValueModel.artist_id);
 				songsBysameArtistGenerator(doc.id, doc.data().FireStoreMusicValueModel.song_title);
@@ -1508,14 +1527,14 @@
 		musicidarray = [];
 		musicpaircontentarray = [];
 		//Retreive all music value pairs
-		db.collection("MusicIdNamePairs").where("FireStoreMusicValueModel.sequence_number","<",50).get().then((querySnapshot) => {
+		db.collection("MusicIdNamePairs").where("FireStoreMusicValueModel.sequence_number", "<", 30).get().then((querySnapshot) => {
 			querySnapshot.forEach((doc) => {
-        console.log(")))))))))))=>"+doc.data().FireStoreMusicValueModel.artist_name);
+				console.log(")))))))))))=>" + doc.data().FireStoreMusicValueModel.artist_name);
 				musicidarray.push(doc.id);
-				console.log("Ids are:"+doc.id);
+				console.log("Ids are:" + doc.id);
 				musicpaircontentarray.push(doc);
 			});
-      console.log(musicpaircontentarray.length);
+			console.log(musicpaircontentarray.length);
 			var cont = document.getElementById("playListContainer");
 			while (cont.hasChildNodes()) {
 				cont.removeChild(cont.firstChild);
@@ -1527,12 +1546,17 @@
 		});
 	}
 
-	function setSongDetails(songname, artistname, imageurlsmall,imageurlLarge) {
+	function setSongDetails(songname, artistname, imageurlsmall, imageurlLarge,song_id) {
 		document.getElementById("songimgsource").src = imageurlsmall;
 		document.getElementById("songname").innerHTML = "<span style='color: #fff'>Track:</span>" + songname;
 		document.getElementById("songartistname").innerHTML = "<span style='color: #fff'>Artists:</span>" + artistname;
-		console.log("*********************************==>"+imageurlLarge);
-		document.getElementById("artistbackgroundimage").style.backgroundImage = "url('"+imageurlLarge+"')";
+		console.log("*********************************==>" + imageurlLarge);
+		document.getElementById("artistbackgroundimage").style.backgroundImage = "url('" + imageurlLarge + "')";
+		if(global_playingSongId!=null){
+			document.getElementById("animation"+global_playingSongId).style.display="none";
+		}
+		document.getElementById("animation"+song_id).style.display="inline";
+		global_playingSongId=song_id;
 	}
 
 	function playSongById(url, isplay) {
