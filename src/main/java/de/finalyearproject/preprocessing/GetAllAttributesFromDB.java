@@ -6,6 +6,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class GetAllAttributesFromDB {
 	static Connection conmysql=null;
@@ -174,7 +175,7 @@ public class GetAllAttributesFromDB {
 	}
 
 
-	public void setAttributes(String eachMSDTrack) {
+	public void setAttributes(String eachMSDTrack) throws SQLException {
 		try {
 			PreparedStatement prepLyrics;
 			prepLyrics = conmysql.prepareStatement("select * from allattributes where track_id=?");
@@ -200,10 +201,11 @@ public class GetAllAttributesFromDB {
 		}catch(Exception e) {
 			System.out.println(e);
 		}
+		conmysql.close();
 	}
 
 
-	public  GetAllAttributesFromDB(String track_ID) {
+	public  GetAllAttributesFromDB(String track_ID) throws SQLException {
 		if(!establishMySqlConnectionWithNewMusixMatchDB()) {
 			System.out.println("MYSQL connection failed");
 			return;
