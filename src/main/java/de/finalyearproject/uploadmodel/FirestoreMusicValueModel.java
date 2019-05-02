@@ -12,13 +12,36 @@ public class FirestoreMusicValueModel {
 	private String artist_hotness;
 	private String song_title;
 	private String artist_id;
+	private int sequence_number;
+	
+	public int getSequence_number() {
+		return sequence_number;
+	}
+
+
+	public void setSequence_number(int sequence_number) {
+		this.sequence_number = sequence_number;
+	}
+	
+	public void trimQuotes() {
+		this.song_title=trimFunction(this.song_title);
+		this.artist_name=trimFunction(this.artist_name);
+		this.artist_id=trimFunction(this.artist_id);
+	}
+	
+	private String trimFunction(String a) {
+		a=a.substring(1);
+		a=a.substring(0, a.length()-1);
+		return a;
+	}
 	
 	@Override
 	public String toString() {
 		return "FirestoreMusicValueModel [tempo=" + tempo + ", mode_confidence=" + mode_confidence + ", duration="
 				+ duration + ", loudness=" + loudness + ", song_hottness=" + song_hottness + ", year=" + year
 				+ ", artist_familiarity=" + artist_familiarity + ", artist_name=" + artist_name + ", artist_hotness="
-				+ artist_hotness + ", song_title=" + song_title + ", artist_id=" + artist_id + "]";
+				+ artist_hotness + ", song_title=" + song_title + ", artist_id=" + artist_id + ", sequence_number="
+				+ sequence_number + "]";
 	}
 
 
@@ -119,7 +142,6 @@ public class FirestoreMusicValueModel {
 	public FirestoreMusicValueModel(String tempo, String mode_confidence, String duration, String loudness,
 			String song_hottness, String year, String artist_familiarity, String artist_name, String artist_hotness,
 			String song_title, String artist_id) {
-		super();
 		this.tempo = tempo;
 		this.mode_confidence = mode_confidence;
 		this.duration = duration;
