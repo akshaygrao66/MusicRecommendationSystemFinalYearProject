@@ -192,8 +192,6 @@
   var storage = firebase.storage();
 	var storageRef = storage.refFromURL("gs://finalyearproject-f9cf5.appspot.com/");
 
-  
-  var dummyLink="data:image/jpeg;base64,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";
 
 	window.addEventListener('online', updateinternetfailure("online"));
 	window.addEventListener('offline', updateinternetfailure("offline"));
@@ -415,7 +413,7 @@
 		console.log("Inside initialise");
 		var dref = musicpaircontentarray[currentsongarrayindex];
 		console.log("Track ID is:" + dref.id);
-		storageRef.child('SongFiles/' + dref.id + '.mp3').getDownloadURL().then(function(songUrl) {
+		storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
 			var downloadurl = songUrl;
 			storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
 				var songimageurl = songThumbnailUrl;
@@ -427,7 +425,9 @@
           //put current artist details pending here
           db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
             name = doc.data().FirestoreArtistIdModel.artist_name;
-            updateArtistImage(dummyLink, name,dummyLink);
+						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
+						var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
+            updateArtistImage(artistImageUrl1, name,artistImageUrl2);
             setSongDetails(songname, name, songimageurl,songImageUrlLarge);
             playSongById(downloadurl, isplay);
           });
@@ -438,12 +438,13 @@
                 fillSameArtistSongs(artistid);
                 db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
                   var name = doc.data().FirestoreArtistIdModel.artist_name;
-                  updateArtistImage(dummyLink, name,dummyLink);
+      						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
+									var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
+									updateArtistImage(artistImageUrl1, name,artistImageUrl2);
                   setSongDetails(songname, name, songimageurl,songImageUrlLarge);
                   playSongById(downloadurl, "play");
                 });
         });
-				
 			}).catch(function(error) {
 
 			});
@@ -465,8 +466,7 @@
 		} else {
 			maincontainer = document.getElementById("playListContainer");
 		}
-		//var hiddenid=document.createElement('button');
-		//hiddenid.id=songid;
+		
 		var songcontainer = document.createElement('div');
 		songcontainer.className = "track";
 
@@ -527,7 +527,7 @@
 		explicitcontainer.addEventListener('click', function() {
 			var sid = this.id;
 			db.collection("MusicIdNamePairs").doc(sid).get().then(function(dref) {
-        storageRef.child('SongFiles/' + dref.id + '.mp3').getDownloadURL().then(function(songUrl) {
+        storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
           var downloadurl =songUrl;
           storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
             var songimageurl =songThumbnailUrl;
@@ -536,9 +536,11 @@
               var songname = dref.data().FireStoreMusicValueModel.song_title;
               var artistid = dref.data().FireStoreMusicValueModel.artist_id;
               fillSameArtistSongs(artistid);
-              db.collection("ArtistIdNamePairs").doc(artistid).get().then(function(doc) {
+              db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
                 var name = doc.data().FirestoreArtistIdModel.artist_name;
-                updateArtistImage(dummyLink, name,dummyLink);
+                var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name,artistImageUrl2);
                 setSongDetails(songname, name, songimageurl,songImageUrlLarge);
                 playSongById(downloadurl, "play");
               });
@@ -549,7 +551,9 @@
                   fillSameArtistSongs(artistid);
                   db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
                     var name = doc.data().FirestoreArtistIdModel.artist_name;
-                    updateArtistImage(dummyLink, name,dummyLink);
+        						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
+										var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
+										updateArtistImage(artistImageUrl1, name,artistImageUrl2);
                     setSongDetails(songname, name, songimageurl,songImageUrlLarge);
                     playSongById(downloadurl, "play");
                   });
@@ -759,7 +763,7 @@
 			closesearchmodal();
 			var sid = this.id.substring(0, this.id.length - 1);
 			db.collection("MusicIdNamePairs").doc(sid).get().then(function(dref) {
-        storageRef.child('SongFiles/' + dref.id + '.mp3').getDownloadURL().then(function(songUrl) {
+        storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
           var downloadurl = songUrl;
           storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
             var songimageurl = songThumbnailUrl;
@@ -770,7 +774,9 @@
               fillSameArtistSongs(artistid);
               db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
                 var name = doc.data().FirestoreArtistIdModel.artist_name;
-                updateArtistImage(dummyLink, name,dummyLink);
+								var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name,artistImageUrl2);
                 setSongDetails(songname, name, songimageurl,songImageUrlLarge);
                 playSongById(downloadurl, "play");
               });
@@ -781,7 +787,9 @@
                   fillSameArtistSongs(artistid);
                   db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
                     var name = doc.data().FirestoreArtistIdModel.artist_name;
-                    updateArtistImage(dummyLink, name,dummyLink);
+        						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
+										var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
+										updateArtistImage(artistImageUrl1, name,artistImageUrl2);
                     setSongDetails(songname, name, songimageurl,songImageUrlLarge);
                     playSongById(downloadurl, "play");
                   });
@@ -898,7 +906,7 @@
 		explicitcontainer.addEventListener('click', function() {
 			var sid = this.id;
 			db.collection("MusicIdNamePairs").doc(sid).get().then(function(dref) {
-        storageRef.child('SongFiles/' + dref.id + '.mp3').getDownloadURL().then(function(songUrl) {
+        storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
           var downloadurl = songUrl;
           storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
             var songimageurl = songThumbnailUrl;
@@ -909,7 +917,9 @@
               fillSameArtistSongs(artistid);
               db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
                 var name = doc.data().FirestoreArtistIdModel.artist_name;
-                updateArtistImage(dummyLink, name,dummyLink);
+    						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name,artistImageUrl2);
                 setSongDetails(songname, name, songimageurl,songImageUrlLarge);
                 playSongById(downloadurl, "play");
               });
@@ -920,7 +930,9 @@
                 fillSameArtistSongs(artistid);
                 db.collection("ArtistIdNamePairs").doc('\''+artistid+'\'').get().then(function(doc) {
                   var name = doc.data().FirestoreArtistIdModel.artist_name;
-                  updateArtistImage(dummyLink, name,dummyLink);
+      						var artistImageUrl1=doc.data().FirestoreArtistIdModel.url1;
+									var artistImageUrl2=doc.data().FirestoreArtistIdModel.url2;
+									updateArtistImage(artistImageUrl1, name,artistImageUrl2);
                   setSongDetails(songname, name, songimageurl,songImageUrlLarge);
                   playSongById(downloadurl, "play");
                 });
@@ -1496,7 +1508,7 @@
 		musicidarray = [];
 		musicpaircontentarray = [];
 		//Retreive all music value pairs
-		db.collection("MusicIdNamePairs").where("FireStoreMusicValueModel.sequence_number","==",0).get().then((querySnapshot) => {
+		db.collection("MusicIdNamePairs").where("FireStoreMusicValueModel.sequence_number","<",50).get().then((querySnapshot) => {
 			querySnapshot.forEach((doc) => {
         console.log(")))))))))))=>"+doc.data().FireStoreMusicValueModel.artist_name);
 				musicidarray.push(doc.id);
@@ -1519,7 +1531,8 @@
 		document.getElementById("songimgsource").src = imageurlsmall;
 		document.getElementById("songname").innerHTML = "<span style='color: #fff'>Track:</span>" + songname;
 		document.getElementById("songartistname").innerHTML = "<span style='color: #fff'>Artists:</span>" + artistname;
-		document.getElementById("artistbackgroundimage").style.backgroundImage = "url("+imageurlLarge+")";
+		console.log("*********************************==>"+imageurlLarge);
+		document.getElementById("artistbackgroundimage").style.backgroundImage = "url('"+imageurlLarge+"')";
 	}
 
 	function playSongById(url, isplay) {
