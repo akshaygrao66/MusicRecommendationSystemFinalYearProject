@@ -41,6 +41,16 @@ def returntrackattributesasdictionary(track_id):
     return returndictionary
 
 
+def returnrequiredattributesasarray(inputdictionary):
+    retarray = []
+    retarray.append(str(inputdictionary['tempo']))
+    retarray.append(inputdictionary["mode_confidence"])
+    retarray.append(inputdictionary["loudness"])
+    retarray.append(inputdictionary["artist_familiarity"])
+    retarray.append(inputdictionary["artist_hottness"])
+    retarray.append(inputdictionary["lyrics_score"])
+    return retarray
+
 
 
 

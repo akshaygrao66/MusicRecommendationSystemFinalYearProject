@@ -905,6 +905,10 @@
 
 		var titlecontainer = document.createElement('div');
 		titlecontainer.className = "track__title";
+		if(title.length >20){
+			title=title.substring(0,17);
+			title=title+"...";
+		}
 		var ti = document.createTextNode(title);
 		titlecontainer.appendChild(ti);
 		songcontainer.appendChild(titlecontainer);
@@ -932,7 +936,7 @@
 						storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
 							var songImageUrlLarge = songThumbnailUrlLarge;
 							var songname = dref.data().FireStoreMusicValueModel.song_title;
-							var artistid = dref.data().FireStoreMusicValueModel.artist_name;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_id;
 							fillSameArtistSongs(artistid);
 							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
 								var name = doc.data().FirestoreArtistIdModel.artist_name;
@@ -945,7 +949,7 @@
 						}).catch(function(error) {
 							var songImageUrlLarge = songimageurl;
 							var songname = dref.data().FireStoreMusicValueModel.song_title;
-							var artistid = dref.data().FireStoreMusicValueModel.artist_name;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_id;
 							fillSameArtistSongs(artistid);
 							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
 								var name = doc.data().FirestoreArtistIdModel.artist_name;
@@ -976,8 +980,95 @@
 				songsBysameArtistGenerator(doc.id, doc.data().FireStoreMusicValueModel.song_title);
 			});
 		});
+		var maincontainer = document.getElementById("recommendedSongsContainer");
+		while (maincontainer.hasChildNodes()) {
+			maincontainer.removeChild(maincontainer.firstChild);
+		}
+		var i;
+		var set = new Set();
+		for (i = 0; set.size<5 && i<40; i++) {
+			set.add(Math.floor(Math.random() * 2000));
+		}
+					
+		set.forEach(function (value){
+			db.collection("MusicIdNamePairs").where("FireStoreMusicValueModel.sequence_number", "==", value).get().then((querySnapshot) => {
+				querySnapshot.forEach((doc) => {
+					generateRecommendedSongs(doc.id, doc.data().FireStoreMusicValueModel.song_title);
+				});
+			});
+		});	
 	}
 
+	function generateRecommendedSongs(songid,title){
+		var maincontainer = document.getElementById("recommendedSongsContainer");
+		var songcontainer = document.createElement('div');
+		songcontainer.className = "track";
+
+		var titlecontainer = document.createElement('div');
+		titlecontainer.className = "track__title";
+		if(title.length >20){
+			title=title.substring(0,17);
+			title=title+"...";
+		}
+		var ti = document.createTextNode(title);
+		titlecontainer.appendChild(ti);
+		songcontainer.appendChild(titlecontainer);
+
+		var explicitcontainer = document.createElement('button');
+		explicitcontainer.className = "track__explicit";
+		explicitcontainer.id = songid;
+		explicitcontainer.setAttribute("style", "background:#1ed760");
+		var spancontainer = document.createElement('span');
+		spancontainer.className = "track__label";
+		spancontainer.setAttribute("style", "color:#fff");
+		var exp = document.createTextNode("Play");
+		spancontainer.appendChild(exp);
+		explicitcontainer.appendChild(spancontainer);
+		songcontainer.appendChild(explicitcontainer);
+
+		maincontainer.appendChild(songcontainer);
+		explicitcontainer.addEventListener('click', function() {
+			var sid = this.id;
+			db.collection("MusicIdNamePairs").doc(sid).get().then(function(dref) {
+				storageRef.child('SongFiles/' + dref.id + '(song).mp3').getDownloadURL().then(function(songUrl) {
+					var downloadurl = songUrl;
+					storageRef.child('SongThumbnails/smallThumbnail/' + dref.id + '(S).jpg').getDownloadURL().then(function(songThumbnailUrl) {
+						var songimageurl = songThumbnailUrl;
+						storageRef.child('SongThumbnails/largeThumbnail/' + dref.id + '(L).jpg').getDownloadURL().then(function(songThumbnailUrlLarge) {
+							var songImageUrlLarge = songThumbnailUrlLarge;
+							var songname = dref.data().FireStoreMusicValueModel.song_title;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_id;
+							fillSameArtistSongs(artistid);
+							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+								var name = doc.data().FirestoreArtistIdModel.artist_name;
+								var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+								setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+								playSongById(downloadurl, "play");
+							});
+						}).catch(function(error) {
+							var songImageUrlLarge = songimageurl;
+							var songname = dref.data().FireStoreMusicValueModel.song_title;
+							var artistid = dref.data().FireStoreMusicValueModel.artist_id;
+							fillSameArtistSongs(artistid);
+							db.collection("ArtistIdNamePairs").doc('\'' + artistid + '\'').get().then(function(doc) {
+								var name = doc.data().FirestoreArtistIdModel.artist_name;
+								var artistImageUrl1 = doc.data().FirestoreArtistIdModel.url1;
+								var artistImageUrl2 = doc.data().FirestoreArtistIdModel.url2;
+								updateArtistImage(artistImageUrl1, name, artistImageUrl2);
+								setSongDetails(songname, name, songimageurl, songImageUrlLarge,dref.id);
+								playSongById(downloadurl, "play");
+							});
+						});
+					});
+				}).catch(function(error) {
+
+				});
+			});
+		});
+	}
+	
 	function playListGenarator(title) {
 		var maincontainer = document.getElementById("playlists");
 		var songcontainer = document.createElement('div');
@@ -1391,6 +1482,10 @@
 				<div class="tracks" id="songsBySameArtistContainer">
 
 				</div>
+				<div class="section-title">Recommended Songs</div>
+				<div class="tracks" id="recommendedSongsContainer">
+					
+				</div>
 				<!--<button class="button-light"></button>-->
 			</div>
 		</div>
@@ -1555,8 +1650,16 @@
 		if(global_playingSongId!=null){
 			document.getElementById("animation"+global_playingSongId).style.display="none";
 		}
-		document.getElementById("animation"+song_id).style.display="inline";
-		global_playingSongId=song_id;
+		if(document.getElementById("animation"+song_id)!=null){
+			document.getElementById("animation"+song_id).style.display="inline";
+			global_playingSongId=song_id;
+		}
+		else{
+			if(global_playingSongId!=null){
+				document.getElementById("animation"+global_playingSongId).style.display="none";	
+			}
+			global_playingSongId=null;
+		}
 	}
 
 	function playSongById(url, isplay) {
