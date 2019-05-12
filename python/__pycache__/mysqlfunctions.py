@@ -17,6 +17,18 @@ def returntrackattributesfromdb(track_id):
     mycursor.close()
     return myresult
 
+def returnalltrackidsfromdb():
+    mycursor = mydb.cursor()
+    querytofetchallatrributes = "SELECT track_id FROM allattributes"
+    mycursor.execute(querytofetchallatrributes)
+    myresult = mycursor.fetchall()
+    res=[]
+    for x in myresult:
+        res.append(x[0])
+    mycursor.close()
+    return res
+
+
 
 def returntrackattributesasdictionary(track_id):
     returndictionary={}
@@ -52,6 +64,15 @@ def returnrequiredattributesasarray(inputdictionary):
     return retarray
 
 
+def returnchangedatatributesasarray(inputdictionary):
+    retarray = returnrequiredattributesasarray(inputdictionary)
+    retarray[0] = round(inputdictionary['tempo'])
+    retarray[1] = round(inputdictionary['mode_confidence']*100)
+    retarray[2] = round(abs(inputdictionary['loudness']))
+    retarray[3] = round(inputdictionary['artist_familiarity']*100)
+    retarray[4] = round(inputdictionary['artist_hottness']*100)
+    retarray[5] = round(inputdictionary['lyrics_score']*1000)
+    return retarray
 
 
 
