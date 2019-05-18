@@ -23,14 +23,14 @@ def initialiseandfitscaler():
     scaler.fit(y)
     return scaler
 
-#
-# def predictusingannandknnwithoutscaling(scaledinput,knnmodel,annmodel):
-#     # predictionfromann = annmodel.predict(scaledinput)
-#     predictionfromknn = knnmodel.predict(scaledinput)
-#     # print("Input:"+str(scaledinput)+"ANN:"+str(predictionfromann)+"KNN:"+str(predictionfromknn))
-#     finalprediction = predictionfromknn
-#
-#     return finalprediction
+
+def predictusingannandknnwithoutscaling(scaledinput,knnmodel,annmodel):
+    # predictionfromann = annmodel.predict(scaledinput)
+    predictionfromknn = knnmodel.predict(scaledinput)
+    # print("Input:"+str(scaledinput)+"ANN:"+str(predictionfromann)+"KNN:"+str(predictionfromknn))
+    finalprediction = predictionfromknn
+
+    return finalprediction
 
 
 def predictusingannandknn(input,knnmodel,annmodel):
@@ -38,10 +38,10 @@ def predictusingannandknn(input,knnmodel,annmodel):
     # scaledinput = scaler.transform(input)
     input=np.array(input)
     input=input.astype(np.float64)
-    # predictionfromann = annmodel.predict(input)
+    predictionfromann = annmodel.predict(input)
     predictionfromknn = knnmodel.predict(input)
     # print("Input:"+str(input)+"ANN:"+str(predictionfromann)+"KNN:"+str(predictionfromknn))
-    finalprediction=predictionfromknn
+    finalprediction=(predictionfromann+predictionfromknn)/2
 
     return finalprediction
 
