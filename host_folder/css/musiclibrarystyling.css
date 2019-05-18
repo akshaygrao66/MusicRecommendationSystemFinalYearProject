@@ -1067,3 +1067,22 @@ padding-right: 1%;
 #eq3 {
   animation-duration: 0.7s;
 }
+
+.pagination {
+  display: inline;
+		float: right;
+}
+
+.pagination a {
+  color: white;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+}
+
+.pagination a.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.pagination a:hover:not(.active) {background-color: #ddd;}
